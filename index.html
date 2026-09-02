@@ -71,7 +71,21 @@
       </table>
     </section>
 
-    <!-- PANEL ADMINISTRADOR (Oculto / Protegido) -->
+    <!-- MODAL / FORMULARIO DE INGRESO ADMIN (Protegido) -->
+    <section id="loginSection" class="hidden bg-white p-6 rounded-lg shadow-md border border-gray-300 max-w-md mx-auto mt-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 text-center">🔐 Acceso Privado - Administración</h2>
+      <div class="mb-4">
+        <label for="adminPin" class="block text-xs font-semibold text-gray-600 mb-1">Contraseña de Administrador:</label>
+        <input type="password" id="adminPin" placeholder="Ingrese PIN" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600">
+        <p id="loginError" class="hidden text-xs text-red-600 font-bold mt-2">PIN Incorrecto. Intente nuevamente.</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="validarAcceso()" class="w-full bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 rounded text-sm">Entrar</button>
+        <button onclick="cerrarLogin()" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded text-sm">Cancelar</button>
+      </div>
+    </section>
+
+    <!-- PANEL ADMINISTRADOR (Oculto por defecto hasta validar clave) -->
     <section id="adminPanel" class="hidden bg-slate-900 text-white p-6 rounded-lg shadow-lg border border-slate-700 mt-8">
       <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-3">
         <h2 class="text-lg font-bold text-yellow-400">⚙️ Módulo de Administración de Stock</h2>
@@ -114,16 +128,15 @@
   <!-- Pie de página con acceso a Admin -->
   <footer class="bg-gray-200 text-center py-4 border-t border-gray-300 text-xs text-gray-600">
     <p>Bodega ZS7 © 2026 — Sistema de Control Interno</p>
-    <button onclick="solicitarAccesoAdmin()" class="mt-1 text-gray-500 hover:text-blue-800 underline">
+    <button onclick="mostrarLogin()" class="mt-1 text-gray-500 hover:text-blue-800 underline">
       Bodega — acceso
     </button>
   </footer>
 
   <!-- Lógica JavaScript -->
   <script>
-    // Configuración Firebase (Reemplazar con tus credenciales reales)
     const firebaseConfig = {
-      databaseURL: "https://bodega-zs7-default-rtdb.firebaseio.com"
+      databaseURL: "https://bodega-zs07-default-rtdb.firebaseio.com"
     };
 
     if (!firebase.apps.length) {
@@ -133,13 +146,11 @@
 
     let localStock = {};
 
-    // Escuchar la base de datos en tiempo real
-    db.ref('inventario').on('value', (snapshot) => {
+    db.ref('stock_zs02').on('value', (snapshot) => {
       localStock = snapshot.val() || {};
-      buscarStock(); // Refrescar vista actual si hay búsqueda activa
+      buscarStock();
     });
 
-    // Función de Búsqueda Estricta
     function buscarStock() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
       const statusMsg = document.getElementById('statusMessage');
@@ -158,7 +169,6 @@
 
       statusMsg.classList.add('hidden');
 
-      // Filtrar coincidencias por código o descripción
       const resultados = Object.keys(localStock).filter(key => {
         const item = localStock[key];
         const cod = (item.codigo || key).toLowerCase();
@@ -202,14 +212,25 @@
       }
     }
 
-    // Acceso Administrador con PIN
-    function solicitarAccesoAdmin() {
-      const pin = prompt("Ingrese PIN de Administrador:");
-      if (pin === "4821") {
+    // Control de Sesión y Módulo Login
+    function mostrarLogin() {
+      document.getElementById('loginSection').classList.remove('hidden');
+      document.getElementById('loginError').classList.add('hidden');
+      document.getElementById('adminPin').value = '';
+    }
+
+    function cerrarLogin() {
+      document.getElementById('loginSection').classList.add('hidden');
+    }
+
+    function validarAcceso() {
+      const pinInput = document.getElementById('adminPin').value;
+      if (pinInput === "4821") {
+        document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-      } else if (pin !== null) {
-        alert("PIN Incorrecto.");
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
       }
     }
 
@@ -217,7 +238,6 @@
       document.getElementById('adminPanel').classList.add('hidden');
     }
 
-    // Agregar / Editar ítem manual
     function guardarItemManual() {
       const cod = document.getElementById('addCodigo').value.trim();
       const desc = document.getElementById('addDesc').value.trim();
@@ -228,7 +248,7 @@
         return;
       }
 
-      db.ref('inventario/' + cod).set({
+      db.ref('stock_zs02/' + cod).set({
         codigo: cod,
         descripcion: desc,
         cantidad: cant
@@ -240,7 +260,6 @@
       });
     }
 
-    // Exportar a CSV
     function exportarCSV() {
       if (Object.keys(localStock).length === 0) {
         alert("No hay datos para exportar.");
@@ -262,7 +281,6 @@
       document.body.removeChild(link);
     }
 
-    // Importar desde CSV
     function importarCSV() {
       const fileInput = document.getElementById('csvFileInput');
       const file = fileInput.files[0];
@@ -279,7 +297,7 @@
         let procesados = 0;
 
         lineas.forEach((linea, idx) => {
-          if (idx === 0 || !linea.trim()) return; // Saltarse encabezado
+          if (idx === 0 || !linea.trim()) return;
           const cols = linea.split(';');
           if (cols.length >= 3) {
             const cod = cols[0].replace(/"/g, '').trim();
@@ -287,7 +305,7 @@
             const cant = parseInt(cols[2].trim()) || 0;
 
             if (cod) {
-              actualizaciones['inventario/' + cod] = {
+              actualizaciones['stock_zs02/' + cod] = {
                 codigo: cod,
                 descripcion: desc,
                 cantidad: cant
