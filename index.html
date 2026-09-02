@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock ZS02 — Antofagasta</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#12161B;
+  --surface:#1A212A;
+  --surface-2:#212B36;
+  --border:#2C3844;
+  --text:#E9E7DF;
+  --text-dim:#8FA0AC;
+  --accent:#FFB020;
+  --accent-dim:#8A6420;
+  --entrada:#4CAF7D;
+  --salida:#E8654C;
+  --radius:4px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;
+  font-feature-settings:'tnum' 1;
+  padding:0 0 60px;
+}
+.app{max-width:760px;margin:0 auto;padding:0 20px;}
+
+/* Masthead */
+.masthead{
+  border-bottom:3px solid var(--accent);
+  padding:28px 0 16px;
+  margin-bottom:24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.masthead h1{
+  font-family:'Archivo',sans-serif;
+  font-weight:800;
+  font-size:clamp(22px,4vw,30px);
+  letter-spacing:0.01em;
+  margin:0;
+  text-transform:uppercase;
+}
+.masthead .plate{
+  font-family:'Archivo',sans-serif;
+  font-weight:600;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--bg);
+  background:var(--accent);
+  padding:5px 10px;
+  border-radius:2px;
+}
+.masthead .sub{
+  width:100%;
+  color:var(--text-dim);
+  font-size:13px;
+  margin-top:4px;
+}
+
+section{margin-bottom:22px;}
+.section-label{
+  font-family:'Archivo',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.03em;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  margin:0 0 8px;
+}
+
+/* Search */
+#searchInput{
+  width:100%;
+  padding:14px 14px;
+  font-size:16px;
+  font-family:'IBM Plex Sans',sans-serif;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  color:var(--text);
+  outline:none;
+}
+#searchInput:focus{border-color:var(--accent);}
+#searchInput::placeholder{color:var(--text-dim);}
+
+.result-card{
+  margin-top:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:4px solid var(--accent);
+  border-radius:var(--radius);
+  padding:16px;
+}
+.result-card + .result-card{margin-top:8px;}
+.result-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.result-codigo{font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.02em;}
+.result-desc{color:var(--text-dim);font-size:13px;margin-top:4px;}
+.result-cantidad{font-family:'Archivo',sans-serif;font-weight:800;font-size:28px;white-space:nowrap;}
+.result-unidad{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;}
+
+.badge{
+  display:inline-block;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  padding:3px 8px;
+  border-radius:2px;
+  margin-top:8px;
+}
+.badge-quiebre{background:rgba(232,101,76,.15);color:#FF8C71;border:1px solid rgba(232,101,76,.4);}
+.badge-bajo{background:rgba(255,176,32,.15);color:#FFC257;border:1px solid rgba(255,176,32,.4);}
+.badge-ok{background:rgba(76,175,125,.15);color:#7BD8A8;border:1px solid rgba(76,175,125,.4);}
+.no-result{color:var(--text-dim);font-size:14px;padding:14px 2px;}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+thead th{
+  text-align:left;
+  font-family:'Archivo',sans-serif;
+  font-weight:600;
+  font-size:11px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:var(--text-dim);
+  border-bottom:1px solid var(--border);
+  padding:8px 8px;
+}
+tbody td{padding:9px 8px;border-bottom:1px solid var(--border);}
+tbody tr:last-child td{border-bottom:none;}
+td.num{text-align:right;font-weight:600;}
+td.codigo{font-family:'Archivo',sans-serif;font-weight:700;}
+.row-quiebre td.num{color:#FF8C71;}
+.row-bajo td.num{color:#FFC257;}
+
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;}
+#lastUpdated{font-size:11px;color:var(--text-dim);}
+
+/* Ops panel */
+.ops-panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+}
+#toggleOps{
+  width:100%;
+  text-align:left;
+  background:var(--surface-2);
+  color:var(--text);
+  border:none;
+  padding:14px 16px;
+  font-family:'Archivo',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  cursor:pointer;
+  border-radius:var(--radius) var(--radius) 0 0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+#toggleOps .chev{transition:transform .2s ease;color:var(--accent);}
+#toggleOps.open .chev{transform:rotate(180deg);}
+#opsBody{padding:18px 16px;display:none;}
+#opsBody.show{display:block;}
+
+.field-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.field{flex:1;min-width:130px;}
+.field label{display:block;font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:4px;}
+.field input,.field select{
+  width:100%;
+  padding:10px;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:14px;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);}
+
+.seg{display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.seg button{
+  flex:1;border:none;background:var(--surface-2);color:var(--text-dim);
+  padding:10px;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:13px;
+  cursor:pointer;
+}
+.seg button.active-entrada{background:rgba(76,175,125,.18);color:var(--entrada);}
+.seg button.active-salida{background:rgba(232,101,76,.18);color:var(--salida);}
+
+.btn-primary{
+  width:100%;
+  padding:12px;
+  background:var(--accent);
+  color:#1A1200;
+  border:none;
+  border-radius:var(--radius);
+  font-family:'Archivo',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  cursor:pointer;
+  margin-top:4px;
+}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-secondary{
+  background:none;border:1px solid var(--border);color:var(--text-dim);
+  padding:9px 12px;border-radius:var(--radius);font-size:12.5px;cursor:pointer;margin-top:10px;
+}
+.btn-danger{
+  background:rgba(232,101,76,.15);
+  border:1px solid rgba(232,101,76,.4);
+  color:#FF8C71;
+  padding:4px 8px;
+  border-radius:2px;
+  font-size:11px;
+  cursor:pointer;
+}
+.btn-danger:hover{background:rgba(232,101,76,.3);}
+
+#movError{color:var(--salida);font-size:13px;margin-top:8px;min-height:1em;}
+#movOk{color:var(--entrada);font-size:13px;margin-top:8px;min-height:1em;}
+
+.mov-log{list-style:none;margin:10px 0 0;padding:0;}
+.mov-log li{
+  display:flex;justify-content:space-between;gap:8px;
+  padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;
+  align-items:center;
+}
+.mov-log li:last-child{border-bottom:none;}
+.mov-tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 6px;border-radius:2px;}
+.mov-tag.entrada{background:rgba(76,175,125,.15);color:var(--entrada);}
+.mov-tag.salida{background:rgba(232,101,76,.15);color:var(--salida);}
+.mov-meta{color:var(--text-dim);font-size:11.5px;}
+
+/* Estilos Sección de Facturas */
+.facturas-panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px 16px;
+  margin-top:30px;
+  border-top:3px solid var(--accent);
+}
+#facturaError{color:var(--salida);font-size:13px;margin-top:8px;min-height:1em;}
+#facturaOk{color:var(--entrada);font-size:13px;margin-top:8px;min-height:1em;}
+
+/* Banner de Estado de Conexión */
+#syncStatus{
+  font-size:11.5px;
+  color:var(--text-dim);
+  text-align:right;
+  margin-bottom:8px;
+}
+#syncStatus.error{color:var(--salida);}
+
+footer{color:var(--text-dim);font-size:11.5px;text-align:center;margin-top:30px;}
+.footer-link{
+  color:var(--text-dim);
+  text-decoration:underline;
+  cursor:pointer;
+  background:none;
+  border:none;
+  font-size:11.5px;
+  font-family:inherit;
+  padding:0;
+}
+.footer-link:hover{color:var(--text);}
+
+@media (max-width:480px){
+  .result-cantidad{font-size:22px;}
+  thead th:nth-child(2), tbody td:nth-child(2){display:none;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="masthead">
+    <h1>Stock en línea</h1>
+    <span class="plate">ZS02 · Antofagasta</span>
+    <div class="sub">Bodega de neumáticos — consulta por código, ingreso y salida en tiempo real</div>
+  </div>
+
+  <div id="syncStatus">Conectando con Firebase...</div>
+
+  <section class="search-panel">
+    <div class="section-label">Buscar código o descripción</div>
+    <input id="searchInput" type="text" placeholder="Ej: 9244 o 22.5" autocomplete="off">
+    <div id="searchResults"></div>
+  </section>
+
+  <section class="stock-panel">
+    <div class="panel-head">
+      <div class="section-label" style="margin-bottom:0;">Stock completo</div>
+      <span id="lastUpdated">—</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Código</th><th>Descripción</th><th style="text-align:right;">Cantidad</th></tr>
+      </thead>
+      <tbody id="stockTableBody">
+        <tr><td colspan="3" style="color:var(--text-dim);padding:14px 8px;">Cargando stock…</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="ops-panel">
+    <button id="toggleOps">
+      <span>Registrar movimiento (bodega)</span>
+      <span class="chev">▾</span>
+    </button>
+    <div id="opsBody">
+      <form id="movForm">
+        <div class="field-row">
+          <div class="field" style="flex:2;">
+            <label for="movCodigo">Código</label>
+            <input id="movCodigo" list="codigoList" placeholder="Ej: 9244" autocomplete="off" required>
+            <datalist id="codigoList"></datalist>
+          </div>
+          <div class="field">
+            <label for="movCantidad">Cantidad</label>
+            <input id="movCantidad" type="number" min="1" step="1" placeholder="0" required>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Tipo de movimiento</label>
+            <div class="seg">
+              <button type="button" id="btnEntrada" class="active-entrada">Entrada</button>
+              <button type="button" id="btnSalida">Salida</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="movNota">Nota (opcional)</label>
+            <input id="movNota" type="text" placeholder="Ej: guía 4521, cliente Transportes X">
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Registrar movimiento</button>
+        <div id="movError"></div>
+        <div id="movOk"></div>
+      </form>
+
+      <div class="section-label" style="margin-top:20px;">Últimos movimientos</div>
+      <ul class="mov-log" id="movLog"><li style="color:var(--text-dim);">Sin movimientos aún.</li></ul>
+
+      <button type="button" class="btn-secondary" id="addCodeBtn">+ Agregar código nuevo a la bodega</button>
+      <div id="addCodeForm" style="display:none;margin-top:12px;">
+        <div class="field-row">
+          <div class="field"><label>Código</label><input id="newCodigo" type="text"></div>
+          <div class="field"><label>Cantidad inicial</label><input id="newCantidad" type="number" min="0" step="1"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Descripción</label><input id="newDescripcion" type="text" placeholder="Ej: 295/80 R22.5 18PR TUB JF568 JINYU"></div>
+        </div>
+        <button type="button" class="btn-primary" id="saveNewCode">Agregar código</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Apartado Oculto de Facturas (Acceso restringido) -->
+  <section id="facturasSection" class="facturas-panel" style="display:none;">
+    <div class="section-label" style="color:var(--accent);margin-bottom:14px;">Módulo de Facturas (Acceso Restringido)</div>
+    <form id="facturaForm">
+      <div class="field-row">
+        <div class="field">
+          <label>Tipo de Factura</label>
+          <div class="seg">
+            <button type="button" id="btnFacturaIngreso" class="active-entrada">Ingreso</button>
+            <button type="button" id="btnFacturaSalida">Salida</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="facturaNum">N° de factura</label>
+          <input id="facturaNum" type="text" placeholder="Ej: F-10243" required autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="facturaTercero">Proveedor o Cliente</label>
+          <input id="facturaTercero" type="text" placeholder="Ej: Neumáticos del Norte SpA" required autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="facturaCodigo">Código de material</label>
+          <input id="facturaCodigo" list="codigoList" placeholder="Ej: 9244" required autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="facturaCantidad">Cantidad</label>
+          <input id="facturaCantidad" type="number" min="1" step="1" placeholder="0" required>
+        </div>
+        <div class="field">
+          <label for="facturaMonto">Monto $ (opcional)</label>
+          <input id="facturaMonto" type="number" min="0" placeholder="Ej: 150000">
+        </div>
+        <div class="field">
+          <label for="facturaFecha">Fecha</label>
+          <input id="facturaFecha" type="date" required>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="facturaObs">Observación (opcional)</label>
+          <input id="facturaObs" type="text" placeholder="Ej: Factura pendiente de pago">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary">Guardar factura</button>
+      <div id="facturaError"></div>
+      <div id="facturaOk"></div>
+    </form>
+
+    <div class="section-label" style="margin-top:24px;">Historial de Facturas</div>
+    <ul class="mov-log" id="facturasLog"><li style="color:var(--text-dim);">Sin facturas registradas.</li></ul>
+  </section>
+
+  <footer>
+    Datos guardados en la nube compartida de este panel — visibles para todos los que abran este mismo enlace.<br>
+    <button type="button" class="footer-link" id="btnPinAuth" style="margin-top:8px;">Bodega — acceso</button>
+    <div id="pinBox" style="display:none;margin-top:8px;">
+      <input type="password" id="pinInput" placeholder="Ingrese PIN" maxlength="6" style="width:110px;padding:6px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);text-align:center;">
+      <button type="button" id="btnPinSubmit" class="btn-secondary" style="padding:6px 10px;margin-top:0;">Entrar</button>
+    </div>
+  </footer>
+</div>
+
+<!-- SDK Firebase via CDN -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  // Configuración Realtime Database usando las credenciales del proyecto bodega-zs07
+  const firebaseConfig = {
+    apiKey: "AIzaSyCDsC0j1PPl6d199ye0i02I1nuoRh3gGJQ",
+    authDomain: "bodega-zs07.firebaseapp.com",
+    databaseURL: "https://bodega-zs07-default-rtdb.firebaseio.com",
+    projectId: "bodega-zs07",
+    storageBucket: "bodega-zs07.firebasestorage.app",
+    messagingSenderId: "685139063161",
+    appId: "1:685139063161:web:743a593806234a2bd93fa8"
+  };
+
+  // Configuración de PIN de Acceso para el Módulo de Facturas
+  const PIN_CORRECTO = "4821";
+
+  // Inicializar Firebase
+  let db = null;
+  let isConnected = false;
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+  } catch(e) {
+    console.error("Error al inicializar Firebase:", e);
+    document.getElementById('syncStatus').textContent = "Sin conexión, no se pudo sincronizar";
+    document.getElementById('syncStatus').classList.add('error');
+  }
+
+  // Estado Local
+  let state = { items: [], movimientos: [] };
+  let facturasState = [];
+
+  const initialItems = [
+    { codigo:'9244',  descripcion:'11 R22.5 16PR TUB JA665 JINYU',       cantidad:100 },
+    { codigo:'4112',  descripcion:'1200 R24 20PR SET JD766 JINYU',       cantidad:40  },
+    { codigo:'9262',  descripcion:'215/75 R17.5 16PR TUB JF518 JINYU',   cantidad:20  },
+    { codigo:'10910', descripcion:'275/80 R22.5 18PR TUB JA608 JINYU',   cantidad:10  },
+    { codigo:'3401',  descripcion:'295/80 R22.5 18PR TUB JF568 JINYU',   cantidad:26  },
+    { codigo:'10381', descripcion:'315/80 R22.5 20PR TUB JF518 JINYU',   cantidad:10  },
+    { codigo:'11157', descripcion:'325/95 R24 22PR SET JA661 JINYU',     cantidad:30  }
+  ];
+
+  // Escuchar Cambios en Stock en Tiempo Real
+  function setupStockListener() {
+    if (!db) return;
+    const stockRef = ref(db, 'stock_zs02');
+    onValue(stockRef, (snapshot) => {
+      isConnected = true;
+      document.getElementById('syncStatus').textContent = "● Sincronizado en tiempo real";
+      document.getElementById('syncStatus').classList.remove('error');
+
+      const data = snapshot.val();
+      if (data) {
+        state.items = data.items || [];
+        state.movimientos = data.movimientos || [];
+      } else {
+        // Inicializar por primera vez si no existen datos
+        state = { items: initialItems, movimientos: [] };
+        saveState();
+      }
+      renderAll();
+    }, (error) => {
+      console.error("Error leyendo Firebase stock:", error);
+      document.getElementById('syncStatus').textContent = "Sin conexión, no se pudo sincronizar";
+      document.getElementById('syncStatus').classList.add('error');
+    });
+  }
+
+  // Escuchar Cambios en Facturas en Tiempo Real
+  function setupFacturasListener() {
+    if (!db) return;
+    const facturasRef = ref(db, 'facturas_zs02');
+    onValue(facturasRef, (snapshot) => {
+      const data = snapshot.val();
+      facturasState = data || [];
+      renderFacturasLog();
+    }, (error) => {
+      console.error("Error leyendo Firebase facturas:", error);
+    });
+  }
+
+  // Guardar Estado de Stock en Firebase
+  async function saveState() {
+    if (!db) return;
+    try {
+      await set(ref(db, 'stock_zs02'), state);
+    } catch(e) {
+      console.error("Error guardando stock en Firebase:", e);
+      document.getElementById('syncStatus').textContent = "Error al guardar datos";
+      document.getElementById('syncStatus').classList.add('error');
+    }
+  }
+
+  // Guardar Estado de Facturas en Firebase
+  async function saveFacturasState() {
+    if (!db) return;
+    try {
+      await set(ref(db, 'facturas_zs02'), facturasState);
+    } catch(e) {
+      console.error("Error guardando facturas en Firebase:", e);
+    }
+  }
+
+  // Helper Functions
+  function fmt(n){ return new Intl.NumberFormat('es-CL').format(n); }
+
+  function estadoDe(cantidad){
+    if(cantidad <= 0) return 'quiebre';
+    if(cantidad <= 10) return 'bajo';
+    return 'ok';
+  }
+
+  function badgeHTML(estado){
+    if(estado==='quiebre') return '<span class="badge badge-quiebre">Quiebre de stock</span>';
+    if(estado==='bajo') return '<span class="badge badge-bajo">Stock bajo</span>';
+    return '<span class="badge badge-ok">Stock normal</span>';
+  }
+
+  function escapeHTML(s){
+    return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // Renderizado
+  function renderAll(){
+    renderTable();
+    renderDatalist();
+    renderMovLog();
+    renderSearch();
+    document.getElementById('lastUpdated').textContent =
+      'Actualizado ' + new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  function renderTable(){
+    const body = document.getElementById('stockTableBody');
+    if(!state.items || state.items.length === 0){
+      body.innerHTML = '<tr><td colspan="3" style="color:var(--text-dim);padding:14px 8px;">No hay códigos cargados.</td></tr>';
+      return;
+    }
+    const sorted = [...state.items].sort((a,b)=> a.codigo.localeCompare(b.codigo,'es',{numeric:true}));
+    body.innerHTML = sorted.map(it=>{
+      const est = estadoDe(it.cantidad);
+      const rowClass = est==='quiebre' ? 'row-quiebre' : (est==='bajo' ? 'row-bajo' : '');
+      return `<tr class="${rowClass}">
+        <td class="codigo">${escapeHTML(it.codigo)}</td>
+        <td>${escapeHTML(it.descripcion)}</td>
+        <td class="num">${fmt(it.cantidad)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderDatalist(){
+    const dl = document.getElementById('codigoList');
+    if(!state.items) return;
+    dl.innerHTML = state.items.map(it=>`<option value="${escapeHTML(it.codigo)}">${escapeHTML(it.descripcion)}</option>`).join('');
+  }
+
+  function renderMovLog(){
+    const log = document.getElementById('movLog');
+    if(!state.movimientos || state.movimientos.length===0){
+      log.innerHTML = '<li style="color:var(--text-dim);">Sin movimientos aún.</li>';
+      return;
+    }
+    const last = [...state.movimientos].slice(-15).reverse();
+    log.innerHTML = last.map(m=>{
+      const fecha = new Date(m.fecha);
+      const fechaStr = fecha.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit'}) + ' ' +
+                        fecha.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+      return `<li>
+        <span>
+          <span class="mov-tag ${m.tipo}">${m.tipo==='entrada'?'Entrada':'Salida'}</span>
+          <strong>${escapeHTML(m.codigo)}</strong> — ${fmt(m.cantidad)} un.
+          ${m.nota ? '<div class="mov-meta">'+escapeHTML(m.nota)+'</div>' : ''}
+        </span>
+        <span class="mov-meta">${fechaStr}</span>
+      </li>`;
+    }).join('');
+  }
+
+  // Búsqueda
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', renderSearch);
+
+  function renderSearch(){
+    const q = searchInput.value.trim().toLowerCase();
+    const box = document.getElementById('searchResults');
+    if(!q){ box.innerHTML=''; return; }
+    if(!state.items) return;
+    const matches = state.items.filter(it=>
+      it.codigo.toLowerCase().includes(q) || it.descripcion.toLowerCase().includes(q)
+    );
+    if(matches.length===0){
+      box.innerHTML = '<div class="no-result">No hay coincidencias para "'+escapeHTML(searchInput.value)+'".</div>';
+      return;
+    }
+    box.innerHTML = matches.map(it=>{
+      const est = estadoDe(it.cantidad);
+      return `<div class="result-card">
+        <div class="result-top">
+          <div>
+            <div class="result-codigo">${escapeHTML(it.codigo)}</div>
+            <div class="result-desc">${escapeHTML(it.descripcion)}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="result-cantidad">${fmt(it.cantidad)}</div>
+            <div class="result-unidad">unidades</div>
+          </div>
+        </div>
+        ${badgeHTML(est)}
+      </div>`;
+    }).join('');
+  }
+
+  // Toggle panel de operaciones
+  const toggleBtn = document.getElementById('toggleOps');
+  const opsBody = document.getElementById('opsBody');
+  toggleBtn.addEventListener('click', ()=>{
+    const isOpen = opsBody.classList.toggle('show');
+    toggleBtn.classList.toggle('open', isOpen);
+  });
+
+  // Segmented control entrada/salida (Stock)
+  let tipoActual = 'entrada';
+  const btnEntrada = document.getElementById('btnEntrada');
+  const btnSalida = document.getElementById('btnSalida');
+  btnEntrada.addEventListener('click', ()=>{
+    tipoActual='entrada';
+    btnEntrada.classList.add('active-entrada'); btnSalida.classList.remove('active-salida');
+  });
+  btnSalida.addEventListener('click', ()=>{
+    tipoActual='salida';
+    btnSalida.classList.add('active-salida'); btnEntrada.classList.remove('active-entrada');
+  });
+
+  // Registrar movimiento
+  document.getElementById('movForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const errBox = document.getElementById('movError');
+    const okBox = document.getElementById('movOk');
+    errBox.textContent=''; okBox.textContent='';
+
+    const codigo = document.getElementById('movCodigo').value.trim();
+    const cantidad = parseInt(document.getElementById('movCantidad').value, 10);
+    const nota = document.getElementById('movNota').value.trim();
+
+    const item = state.items.find(it=>it.codigo === codigo);
+    if(!item){
+      errBox.textContent = 'Ese código no existe en la bodega. Agrégalo primero con "+ Agregar código nuevo".';
+      return;
+    }
+    if(!cantidad || cantidad <= 0){
+      errBox.textContent = 'Ingresa una cantidad válida.';
+      return;
+    }
+    if(tipoActual === 'salida' && cantidad > item.cantidad){
+      errBox.textContent = `No hay stock suficiente. Disponible: ${fmt(item.cantidad)} unidades.`;
+      return;
+    }
+
+    item.cantidad += (tipoActual === 'entrada' ? cantidad : -cantidad);
+    if(!state.movimientos) state.movimientos = [];
+    state.movimientos.push({
+      id: Date.now(),
+      codigo, tipo: tipoActual, cantidad, nota,
+      fecha: new Date().toISOString()
+    });
+
+    await saveState();
+    renderAll();
+    okBox.textContent = 'Movimiento registrado.';
+    document.getElementById('movCantidad').value='';
+    document.getElementById('movNota').value='';
+    setTimeout(()=>{ okBox.textContent=''; }, 2500);
+  });
+
+  // Agregar código nuevo
+  const addCodeBtn = document.getElementById('addCodeBtn');
+  const addCodeForm = document.getElementById('addCodeForm');
+  addCodeBtn.addEventListener('click', ()=>{
+    addCodeForm.style.display = addCodeForm.style.display==='none' ? 'block' : 'none';
+  });
+
+  document.getElementById('saveNewCode').addEventListener('click', async ()=>{
+    const codigo = document.getElementById('newCodigo').value.trim();
+    const descripcion = document.getElementById('newDescripcion').value.trim();
+    const cantidad = parseInt(document.getElementById('newCantidad').value, 10) || 0;
+
+    if(!codigo || !descripcion){
+      alert('Completa código y descripción.');
+      return;
+    }
+    if(state.items.some(it=>it.codigo===codigo)){
+      alert('Ese código ya existe.');
+      return;
+    }
+    state.items.push({ codigo, descripcion, cantidad });
+    await saveState();
+    renderAll();
+    document.getElementById('newCodigo').value='';
+    document.getElementById('newDescripcion').value='';
+    document.getElementById('newCantidad').value='';
+    addCodeForm.style.display='none';
+  });
+
+  // =========================================================================
+  // LÓGICA MÓDULO FACTURAS & AUTENTICACIÓN POR PIN
+  // =========================================================================
+
+  const btnPinAuth = document.getElementById('btnPinAuth');
+  const pinBox = document.getElementById('pinBox');
+  const pinInput = document.getElementById('pinInput');
+  const btnPinSubmit = document.getElementById('btnPinSubmit');
+  const facturasSection = document.getElementById('facturasSection');
+
+  btnPinAuth.addEventListener('click', () => {
+    pinBox.style.display = pinBox.style.display === 'none' ? 'block' : 'none';
+    if(pinBox.style.display === 'block') pinInput.focus();
+  });
+
+  btnPinSubmit.addEventListener('click', checkPin);
+  pinInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') checkPin();
+  });
+
+  function checkPin(){
+    if(pinInput.value.trim() === PIN_CORRECTO){
+      facturasSection.style.display = 'block';
+      pinBox.style.display = 'none';
+      pinInput.value = '';
+      setupFacturasListener();
+      facturasSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      alert('PIN incorrecto');
+      pinInput.value = '';
+    }
+  }
+
+  // Segmented control entrada/salida (Facturas)
+  let tipoFacturaActual = 'ingreso';
+  const btnFacturaIngreso = document.getElementById('btnFacturaIngreso');
+  const btnFacturaSalida = document.getElementById('btnFacturaSalida');
+
+  btnFacturaIngreso.addEventListener('click', () => {
+    tipoFacturaActual = 'ingreso';
+    btnFacturaIngreso.classList.add('active-entrada');
+    btnFacturaSalida.classList.remove('active-salida');
+  });
+
+  btnFacturaSalida.addEventListener('click', () => {
+    tipoFacturaActual = 'salida';
+    btnFacturaSalida.classList.add('active-salida');
+    btnFacturaIngreso.classList.remove('active-entrada');
+  });
+
+  // Default fecha hoy en input fecha de facturas
+  document.getElementById('facturaFecha').valueAsDate = new Date();
+
+  // Guardar Factura
+  document.getElementById('facturaForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errBox = document.getElementById('facturaError');
+    const okBox = document.getElementById('facturaOk');
+    errBox.textContent = ''; okBox.textContent = '';
+
+    const num = document.getElementById('facturaNum').value.trim();
+    const tercero = document.getElementById('facturaTercero').value.trim();
+    const codigo = document.getElementById('facturaCodigo').value.trim();
+    const cantidad = parseInt(document.getElementById('facturaCantidad').value, 10);
+    const montoVal = document.getElementById('facturaMonto').value;
+    const monto = montoVal ? parseFloat(montoVal) : null;
+    const fecha = document.getElementById('facturaFecha').value;
+    const obs = document.getElementById('facturaObs').value.trim();
+
+    if(!num || !tercero || !codigo || !cantidad || !fecha){
+      errBox.textContent = 'Por favor completa todos los campos obligatorios.';
+      return;
+    }
+
+    const nuevaFactura = {
+      id: Date.now(),
+      tipo: tipoFacturaActual,
+      num, tercero, codigo, cantidad, monto, fecha, obs
+    };
+
+    if(!facturasState) facturasState = [];
+    facturasState.push(nuevaFactura);
+
+    await saveFacturasState();
+    renderFacturasLog();
+
+    okBox.textContent = 'Factura guardada correctamente.';
+    document.getElementById('facturaNum').value = '';
+    document.getElementById('facturaTercero').value = '';
+    document.getElementById('facturaCodigo').value = '';
+    document.getElementById('facturaCantidad').value = '';
+    document.getElementById('facturaMonto').value = '';
+    document.getElementById('facturaObs').value = '';
+    document.getElementById('facturaFecha').valueAsDate = new Date();
+
+    setTimeout(() => { okBox.textContent = ''; }, 2500);
+  });
+
+  // Renderizar Log de Facturas
+  function renderFacturasLog(){
+    const log = document.getElementById('facturasLog');
+    if(!facturasState || facturasState.length === 0){
+      log.innerHTML = '<li style="color:var(--text-dim);">Sin facturas registradas.</li>';
+      return;
+    }
+
+    const reversed = [...facturasState].reverse();
+    log.innerHTML = reversed.map(f => {
+      return `<li>
+        <span>
+          <span class="mov-tag ${f.tipo === 'ingreso' ? 'entrada' : 'salida'}">${f.tipo === 'ingreso' ? 'Fact. Ingreso' : 'Fact. Salida'}</span>
+          <strong>N° ${escapeHTML(f.num)}</strong> — ${escapeHTML(f.tercero)}
+          <div class="mov-meta">
+            Mat: <strong>${escapeHTML(f.codigo)}</strong> | Cant: ${fmt(f.cantidad)} ${f.monto ? '| Monto: $' + fmt(f.monto) : ''} | Fecha: ${f.fecha}
+            ${f.obs ? '<br>Obs: ' + escapeHTML(f.obs) : ''}
+          </div>
+        </span>
+        <button type="button" class="btn-danger" data-id="${f.id}">Eliminar</button>
+      </li>`;
+    }).join('');
+
+    // Event Listeners para Botones de Eliminar Factura
+    log.querySelectorAll('.btn-danger').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const idToDelete = Number(e.target.getAttribute('data-id'));
+        if(confirm('¿Estás seguro de que deseas eliminar esta factura?')){
+          facturasState = facturasState.filter(f => f.id !== idToDelete);
+          await saveFacturasState();
+          renderFacturasLog();
+        }
+      });
+    });
+  }
+
+  // Inicializar escuchadores
+  setupStockListener();
+</script>
+</body>
+</html>
