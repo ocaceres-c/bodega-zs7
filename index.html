@@ -4,17 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bodega ZS7 - Control de Stock</title>
-
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Firebase App & Database (SDK v9 Compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
 
-  <!-- Encabezado Principal (Amarillo / Negro) -->
+  <!-- Encabezado -->
   <header class="bg-amber-500 text-slate-900 p-4 shadow-md">
     <div class="max-w-4xl mx-auto flex justify-between items-center">
       <h1 class="text-xl font-black tracking-wide">BODEGA ZS7</h1>
@@ -27,36 +23,26 @@
   <!-- Contenedor Principal -->
   <main class="max-w-4xl mx-auto w-full p-4 flex-grow">
 
-    <!-- Buscador de productos -->
+    <!-- Buscador -->
     <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
       <label for="searchInput" class="block text-sm font-semibold text-gray-700 mb-2">
         Buscar repuesto o neumático (Código o Descripción):
       </label>
       <div class="flex gap-2">
-        <input 
-          type="text" 
-          id="searchInput" 
-          placeholder="Ej: N185/65R15 o 10023..." 
-          class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
-          oninput="buscarStock()"
-        >
-        <button onclick="buscarStock()" class="bg-amber-500 text-slate-900 font-bold px-6 py-2 rounded-lg hover:bg-amber-600 transition">
-          Buscar
-        </button>
+        <input type="text" id="searchInput" placeholder="Ej: N185/65R15 o 10023..." class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500" oninput="buscarStock()">
+        <button onclick="buscarStock()" class="bg-amber-500 text-slate-900 font-bold px-6 py-2 rounded-lg hover:bg-amber-600 transition">Buscar</button>
       </div>
     </section>
 
-    <!-- Estado por defecto -->
+    <!-- Alertas y Resultados -->
     <div id="statusMessage" class="text-center text-gray-500 py-10 bg-white rounded-lg border border-dashed border-gray-300">
       Ingrese un código o descripción en el buscador para verificar disponibilidad.
     </div>
 
-    <!-- Alerta SIN STOCK -->
     <div id="noStockAlert" class="hidden text-center bg-red-100 border border-red-400 text-red-700 font-bold px-4 py-8 rounded-lg text-xl shadow-sm mb-6">
       ⚠️ SIN STOCK
     </div>
 
-    <!-- Tabla de Resultados -->
     <section id="resultsTableContainer" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <table class="w-full text-left border-collapse">
         <thead class="bg-slate-100 text-slate-700 uppercase text-xs">
@@ -67,19 +53,17 @@
             <th class="p-3 border-b text-center">Estado</th>
           </tr>
         </thead>
-        <tbody id="resultsTableBody" class="divide-y divide-gray-200 text-sm">
-        </tbody>
+        <tbody id="resultsTableBody" class="divide-y divide-gray-200 text-sm"></tbody>
       </table>
     </section>
 
-    <!-- MODAL / VENTANA FLOTANTE DE LOGIN -->
+    <!-- LOGIN MODAL -->
     <div id="loginModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-200 max-w-sm w-full">
         <h2 class="text-lg font-bold text-slate-900 mb-2 text-center">🔐 Acceso Administrador</h2>
-        <p class="text-xs text-gray-500 mb-4 text-center">Ingrese la contraseña para gestionar el inventario.</p>
         <div class="mb-4">
           <input type="password" id="adminPin" placeholder="PIN de Seguridad" class="w-full border border-gray-300 rounded-lg px-4 py-2 text-center text-lg tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-amber-500" onkeyup="if(event.key === 'Enter') validarAcceso()">
-          <p id="loginError" class="hidden text-xs text-red-600 font-bold mt-2 text-center">⚠️ PIN Incorrecto. Intente nuevamente.</p>
+          <p id="loginError" class="hidden text-xs text-red-600 font-bold mt-2 text-center">⚠️ PIN Incorrecto.</p>
         </div>
         <div class="flex gap-2">
           <button onclick="validarAcceso()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 rounded-lg text-sm">Ingresar</button>
@@ -91,57 +75,64 @@
     <!-- PANEL ADMINISTRADOR -->
     <section id="adminPanel" class="hidden bg-slate-900 text-white p-6 rounded-lg shadow-lg border border-slate-700 mt-8">
       <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-3">
-        <h2 class="text-lg font-bold text-amber-400">⚙️ Módulo de Administración de Stock</h2>
+        <h2 class="text-lg font-bold text-amber-400">⚙️ Módulo de Administración y Trazabilidad</h2>
         <button onclick="cerrarAdmin()" class="text-xs bg-red-600 px-3 py-1 rounded hover:bg-red-700 font-semibold">Cerrar Sesión</button>
       </div>
 
-      <!-- Importar / Exportar -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-slate-800 p-4 rounded-lg border border-slate-700">
-        <div>
-          <h3 class="text-sm font-semibold mb-2 text-slate-300">Exportar Inventario</h3>
-          <button onclick="exportarCSV()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded text-sm">
-            📥 Descargar Base de Datos (CSV)
-          </button>
+      <!-- 1. DESCUENTO DE STOCK CON DOCUMENTO DE RETIRO -->
+      <div class="bg-red-950/40 p-4 rounded-lg border border-red-800/60 mb-6">
+        <h3 class="text-sm font-bold mb-3 text-red-400 flex items-center gap-1">
+          🔻 Descontar / Rebajar Stock Actual (Salida)
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          <input type="text" id="descCodigo" placeholder="Código producto" class="bg-slate-900 border border-slate-600 px-3 py-2 rounded text-sm text-white uppercase">
+          <input type="number" id="descCant" min="1" placeholder="Cantidad" class="bg-slate-900 border border-slate-600 px-3 py-2 rounded text-sm text-white">
+          <input type="text" id="descDoc" placeholder="N° Doc Retiro (Guía/OT/Factura)" class="bg-slate-900 border border-slate-600 px-3 py-2 rounded text-sm text-white uppercase">
         </div>
-        <div>
-          <h3 class="text-sm font-semibold mb-2 text-slate-300">Importar Inventario (CSV)</h3>
-          <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-slate-200 hover:file:bg-slate-600 mb-1"/>
-          <button onclick="importarCSV()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 rounded text-sm">
-            📤 Cargar Archivo
-          </button>
-        </div>
+        <button onclick="descontarStock()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded text-sm transition">
+          Confirmar y Descontar Stock
+        </button>
       </div>
 
-      <!-- Carga Manual -->
-      <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
-        <h3 class="text-sm font-semibold mb-3 text-slate-300">Agregar / Actualizar Ítem Manual</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-          <input type="text" id="addCodigo" placeholder="Código" class="bg-slate-900 border border-slate-600 px-3 py-2 rounded text-sm text-white">
-          <input type="text" id="addDesc" placeholder="Descripción" class="bg-slate-900 border border-slate-600 px-3 py-2 rounded text-sm text-white">
-          <input type="number" id="addCant" placeholder="Cantidad" class="bg-slate-900 border border-slate-600 px-3 py-2 rounded text-sm text-white">
+      <!-- 2. CARGA MASIVA CSV CON APROBACIÓN POR CASILLA Y DOCUMENTO DE INGRESO -->
+      <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6">
+        <h3 class="text-sm font-semibold mb-2 text-slate-300">📤 Carga Masiva de Stock (Ingreso)</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-slate-200 hover:file:bg-slate-600"/>
+          <input type="text" id="ingresoDoc" placeholder="N° Documento de Ingreso (Obligatorio)" class="bg-slate-900 border border-slate-600 px-3 py-2 rounded text-sm text-white uppercase">
         </div>
-        <button onclick="guardarItemManual()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 rounded text-sm">
-          Guardar Ítem
+
+        <div class="flex items-center gap-2 mb-4 bg-slate-900 p-3 rounded border border-slate-700">
+          <input type="checkbox" id="checkAprobado" class="w-4 h-4 text-amber-500 rounded border-gray-300 focus:ring-amber-500">
+          <label for="checkAprobado" class="text-xs text-amber-300 font-medium">
+            Confirmo que el documento asignado respalda la entrada física de este inventario a bodega.
+          </label>
+        </div>
+
+        <button onclick="importarCSV()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 rounded text-sm">
+          Validar y Procesar Carga Masiva
+        </button>
+      </div>
+
+      <!-- Exportación -->
+      <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <h3 class="text-sm font-semibold mb-2 text-slate-300">📥 Exportar Estado Actual</h3>
+        <button onclick="exportarCSV()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded text-sm">
+          Descargar Inventario Base (CSV)
         </button>
       </div>
     </section>
 
   </main>
 
-  <!-- Pie de página -->
   <footer class="bg-gray-200 text-center py-4 border-t border-gray-300 text-xs text-gray-600">
     <p>Bodega ZS7 © 2026 — Sistema de Control Interno</p>
   </footer>
 
-  <!-- Lógica JavaScript -->
   <script>
-    const firebaseConfig = {
-      databaseURL: "https://bodega-zs07-default-rtdb.firebaseio.com"
-    };
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
+    const firebaseConfig = { databaseURL: "https://bodega-zs07-default-rtdb.firebaseio.com" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let localStock = {};
@@ -159,7 +150,6 @@
       const tableBody = document.getElementById('resultsTableBody');
 
       tableBody.innerHTML = '';
-
       if (query === '') {
         statusMsg.classList.remove('hidden');
         noStockAlert.classList.add('hidden');
@@ -168,7 +158,6 @@
       }
 
       statusMsg.classList.add('hidden');
-
       const resultados = Object.keys(localStock).filter(key => {
         const item = localStock[key];
         const cod = (item.codigo || key).toLowerCase();
@@ -180,15 +169,13 @@
         noStockAlert.classList.remove('hidden');
         tableContainer.classList.add('hidden');
       } else {
-        let hayStockValido = false;
-
+        let hayStock = false;
         resultados.forEach(key => {
           const item = localStock[key];
           const cant = parseInt(item.cantidad || 0);
-
           if (cant > 0) {
-            hayStockValido = true;
-            const fila = `
+            hayStock = true;
+            tableBody.innerHTML += `
               <tr class="hover:bg-gray-50">
                 <td class="p-3 font-mono font-bold">${item.codigo || key}</td>
                 <td class="p-3">${item.descripcion}</td>
@@ -196,13 +183,10 @@
                 <td class="p-3 text-center">
                   <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-semibold">DISPONIBLE</span>
                 </td>
-              </tr>
-            `;
-            tableBody.innerHTML += fila;
+              </tr>`;
           }
         });
-
-        if (hayStockValido) {
+        if (hayStock) {
           noStockAlert.classList.add('hidden');
           tableContainer.classList.remove('hidden');
         } else {
@@ -212,21 +196,16 @@
       }
     }
 
-    // Modal de Login
     function mostrarLogin() {
       document.getElementById('loginModal').classList.remove('hidden');
       document.getElementById('loginError').classList.add('hidden');
       document.getElementById('adminPin').value = '';
       document.getElementById('adminPin').focus();
     }
-
-    function cerrarLogin() {
-      document.getElementById('loginModal').classList.add('hidden');
-    }
+    function cerrarLogin() { document.getElementById('loginModal').classList.add('hidden'); }
 
     function validarAcceso() {
-      const pinInput = document.getElementById('adminPin').value;
-      if (pinInput === "4821") {
+      if (document.getElementById('adminPin').value === "4821") {
         document.getElementById('loginModal').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -234,60 +213,81 @@
         document.getElementById('loginError').classList.remove('hidden');
       }
     }
+    function cerrarAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
 
-    function cerrarAdmin() {
-      document.getElementById('adminPanel').classList.add('hidden');
-    }
+    // REBAJE DE STOCK CON REGISTRO DE DOCUMENTO
+    function descontarStock() {
+      const codInput = document.getElementById('descCodigo').value.trim();
+      const cantARebajar = parseInt(document.getElementById('descCant').value);
+      const docRetiro = document.getElementById('descDoc').value.trim();
 
-    function guardarItemManual() {
-      const cod = document.getElementById('addCodigo').value.trim();
-      const desc = document.getElementById('addDesc').value.trim();
-      const cant = parseInt(document.getElementById('addCant').value);
-
-      if (!cod || !desc || isNaN(cant)) {
-        alert("Por favor complete todos los campos correctamente.");
+      if (!codInput || isNaN(cantARebajar) || cantARebajar <= 0) {
+        alert("⚠️ Ingrese un código válido y una cantidad mayor a 0.");
+        return;
+      }
+      if (!docRetiro) {
+        alert("⚠️ OBLIGATORIO: Ingrese el número o código del documento de retiro.");
         return;
       }
 
-      db.ref('stock_zs02/' + cod).set({
-        codigo: cod,
-        descripcion: desc,
-        cantidad: cant
+      const keyEncontrada = Object.keys(localStock).find(
+        key => key.toLowerCase() === codInput.toLowerCase() || 
+               (localStock[key].codigo && localStock[key].codigo.toLowerCase() === codInput.toLowerCase())
+      );
+
+      if (!keyEncontrada) {
+        alert(`El código "${codInput}" no existe en la base.`);
+        return;
+      }
+
+      const item = localStock[keyEncontrada];
+      const stockActual = parseInt(item.cantidad || 0);
+
+      if (cantARebajar > stockActual) {
+        alert(`Error: Intenta descontar ${cantARebajar} unidades, pero solo hay ${stockActual} disponibles.`);
+        return;
+      }
+
+      const nuevoStock = stockActual - cantARebajar;
+
+      // Actualizar el stock en el nodo del producto
+      db.ref('stock_zs02/' + keyEncontrada).update({
+        cantidad: nuevoStock
       }).then(() => {
-        alert("Ítem guardado con éxito.");
-        document.getElementById('addCodigo').value = '';
-        document.getElementById('addDesc').value = '';
-        document.getElementById('addCant').value = '';
-      });
+        // Guardar historial de salida para auditoría
+        db.ref('historial_movimientos').push({
+          tipo: 'SALIDA',
+          codigo: keyEncontrada,
+          descripcion: item.descripcion || '',
+          cantidad_descontada: cantARebajar,
+          documento: docRetiro,
+          fecha: new Date().toISOString()
+        });
+
+        alert(`✅ Stock descontado. Producto "${keyEncontrada}" quedó con ${nuevoStock} unidades. Registrado bajo Doc: ${docRetiro}`);
+        document.getElementById('descCodigo').value = '';
+        document.getElementById('descCant').value = '';
+        document.getElementById('descDoc').value = '';
+      }).catch(err => alert("Error al actualizar: " + err.message));
     }
 
-    function exportarCSV() {
-      if (Object.keys(localStock).length === 0) {
-        alert("No hay datos para exportar.");
-        return;
-      }
-
-      let csv = "Codigo;Descripcion;Cantidad\n";
-      Object.keys(localStock).forEach(key => {
-        const item = localStock[key];
-        csv += `"${item.codigo || key}";"${item.descripcion}";${item.cantidad}\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `inventario_bodega_zs7_${new Date().toISOString().slice(0,10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
+    // INGRESO MASIVO CSV CON VALIDACIÓN DE CASILLA Y DOCUMENTO
     function importarCSV() {
       const fileInput = document.getElementById('csvFileInput');
+      const docIngreso = document.getElementById('ingresoDoc').value.trim();
+      const casillaAprobado = document.getElementById('checkAprobado').checked;
       const file = fileInput.files[0];
 
       if (!file) {
-        alert("Seleccione un archivo CSV primero.");
+        alert("⚠️ Seleccione un archivo CSV primero.");
+        return;
+      }
+      if (!docIngreso) {
+        alert("⚠️ OBLIGATORIO: Ingrese el número del documento de ingreso antes de procesar.");
+        return;
+      }
+      if (!casillaAprobado) {
+        alert("⚠️ BLOQUEO DE SEGURIDAD: Debe hacer clic en la casilla de confirmación para autorizar la carga al sistema.");
         return;
       }
 
@@ -309,7 +309,8 @@
               actualizaciones['stock_zs02/' + cod] = {
                 codigo: cod,
                 descripcion: desc,
-                cantidad: cant
+                cantidad: cant,
+                ultimo_doc_ingreso: docIngreso
               };
               procesados++;
             }
@@ -317,15 +318,44 @@
         });
 
         if (procesados > 0) {
+          // Registrar auditoría del ingreso masivo
+          actualizaciones['historial_movimientos/' + Date.now()] = {
+            tipo: 'INGRESO_MASIVO',
+            documento: docIngreso,
+            total_items: procesados,
+            fecha: new Date().toISOString()
+          };
+
           db.ref().update(actualizaciones).then(() => {
-            alert(`Se importaron ${procesados} registros correctamente.`);
+            alert(`✅ Carga masiva exitosa: Se actualizaron ${procesados} registros bajo el documento "${docIngreso}".`);
             fileInput.value = '';
-          });
+            document.getElementById('ingresoDoc').value = '';
+            document.getElementById('checkAprobado').checked = false;
+          }).catch(err => alert("Error al cargar la base: " + err.message));
         } else {
-          alert("No se encontraron registros válidos. Asegúrese de usar el formato: Codigo;Descripcion;Cantidad");
+          alert("No se encontraron registros válidos. Verifique el formato CSV (Codigo;Descripcion;Cantidad).");
         }
       };
       reader.readAsText(file);
+    }
+
+    function exportarCSV() {
+      if (Object.keys(localStock).length === 0) {
+        alert("No hay datos para exportar.");
+        return;
+      }
+      let csv = "Codigo;Descripcion;Cantidad\n";
+      Object.keys(localStock).forEach(key => {
+        const item = localStock[key];
+        csv += `"${item.codigo || key}";"${item.descripcion}";${item.cantidad}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", `inventario_bodega_zs7_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   </script>
 </body>
